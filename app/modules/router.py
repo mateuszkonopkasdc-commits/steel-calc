@@ -1,18 +1,8 @@
 import streamlit as st
-
-from app.modules import bolts_strength, bolt_geometry, materials, conversions, welds
 from app.ui.components import reference_text
 
-
-MENU_STRUCTURE = {
-    "🛠️ GENERAL DESIGN DATA": ["Angle Workable Gages", "ASTM Material Data", "Unit Conversions"],
-    "📐 GEOMETRIC LIMITS": [
-        "Bolt Hole Dimensions", "Bolt Min. Edge Distance", "Bolt Min. Spacing",
-        "Effective Throat of Flare-Groove Welds", "Min. Throat of PJP Groove Welds",
-        "Min. Size of Fillet Welds", "Max. Size of Fillet Welds"
-    ],
-    "📋 COMPONENT LIMIT STATES": ["Shear Strength of Bolts", "Tensile Strength of Bolts"]
-}
+# Importy modułów (bez importowania w app/modules/__init__.py!)
+from app.modules import bolts_strength, bolt_geometry, materials, conversions, welds
 
 REF_MAP = {
     "Angle Workable Gages": "Reference: AISC 15th Ed. Table 1-7A",
@@ -29,34 +19,43 @@ REF_MAP = {
 }
 
 DISPATCH = {
+    # COMPONENT LIMIT STATES
     "Shear Strength of Bolts": bolts_strength.render,
     "Tensile Strength of Bolts": bolts_strength.render,
+
+    # GEOMETRIC LIMITS
     "Bolt Hole Dimensions": bolt_geometry.render,
     "Bolt Min. Edge Distance": bolt_geometry.render,
     "Bolt Min. Spacing": bolt_geometry.render,
+
+    # GENERAL DESIGN DATA
     "Angle Workable Gages": materials.render,
     "ASTM Material Data": materials.render,
     "Unit Conversions": conversions.render,
+
+    # WELDS
     "Effective Throat of Flare-Groove Welds": welds.render,
     "Min. Throat of PJP Groove Welds": welds.render,
     "Min. Size of Fillet Welds": welds.render,
     "Max. Size of Fillet Welds": welds.render,
 }
 
+def dispatch_module(mod: str) -> None:
+    # nagłówek
+    icon = "📋" if st.session_state.get("active_section") and "📋" in st.session_state.get("active_section") else \
+           "📐" if st.session_state.get("active_section") and "📐" in st.session_state.get("active_section") else "📏"
+    st.markdown(f'<h1 style="font-size: 1.6rem; margin-bottom: 0;">{icon} {mod}</h1>', unsafe_allow_html=True)
 
-def dispatch_module(mod: str | None) -> None:
-    # Punkt 2: usuwamy żółty tekst (nie pokazujemy żadnego "info boxa" na start)
-    if not mod:
-        return
-
-    # Punkt 4: Reference ma się wyświetlać zawsze, jeśli istnieje
+    # reference (tekst)
     ref = REF_MAP.get(mod)
     if ref:
         reference_text(ref)
 
-    # Render modułu
+    st.divider()
+
     handler = DISPATCH.get(mod)
-    if handler:
-        handler(mod)
-    else:
-        st.warning("Module not implemented yet.")
+    if not handler:
+        st.error(f"Brak obsługi modułu: {mod}")
+        return
+
+    handler(mod)

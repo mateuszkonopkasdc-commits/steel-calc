@@ -2,68 +2,36 @@ import sys
 from pathlib import Path
 import streamlit as st
 
-# --- FIX for Streamlit Cloud imports ---
-REPO_ROOT = Path(__file__).resolve().parents[1]  # .../steel-calc
+# --- FIX imports for local/cloud ---
+REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from app.auth import require_login, logout_button
+from app.auth import require_login
 from app.ui.styles import inject_styles
 from app.ui.components import render_sidebar
 from app.modules.router import dispatch_module
+from app.utils.images import render_image
 
-# --- Local image helper (no extra imports needed) ---
-def render_image(name: str, height: str = "520px", width: str = "100%") -> None:
-    """
-    Renders image from /assets by name (without extension).
-    Supported: png/jpg/jpeg/webp
-    """
-    assets_dir = REPO_ROOT / "assets"
-    exts = [".png", ".jpg", ".jpeg", ".webp", ".PNG", ".JPG", ".JPEG", ".WEBP"]
-    img_path = None
-    for ext in exts:
-        p = assets_dir / f"{name}{ext}"
-        if p.exists():
-            img_path = p
-            break
+MENU_STRUCTURE = {
+    "🛠️ GENERAL DESIGN DATA": ["Angle Workable Gages", "ASTM Material Data", "Unit Conversions"],
+    "📐 GEOMETRIC LIMITS": [
+        "Bolt Hole Dimensions", "Bolt Min. Edge Distance", "Bolt Min. Spacing",
+        "Effective Throat of Flare-Groove Welds", "Min. Throat of PJP Groove Welds",
+        "Min. Size of Fillet Welds", "Max. Size of Fillet Welds"
+    ],
+    "📋 COMPONENT LIMIT STATES": ["Shear Strength of Bolts", "Tensile Strength of Bolts"],
+}
 
-    if not img_path:
-        st.info(f"Brak obrazka: assets/{name}.png (lub .jpg/.jpeg/.webp)")
-        return
-
-    # HTML img so we can control height
-    import base64
-    mime = "image/png"
-    if img_path.suffix.lower() in [".jpg", ".jpeg"]:
-        mime = "image/jpeg"
-    elif img_path.suffix.lower() == ".webp":
-        mime = "image/webp"
-
-    b64 = base64.b64encode(img_path.read_bytes()).decode("utf-8")
-    st.markdown(
-        f"""
-        <img src="data:{mime};base64,{b64}"
-             style="width:{width}; height:{height}; object-fit:contain; border-radius:8px;" />
-        """,
-        unsafe_allow_html=True
-    )
-
-# ====== PAGE CONFIG ======
 st.set_page_config(page_title="Engineering Platform | Steel Calc", layout="wide")
 inject_styles()
 
-# ====== LOGIN ======
 require_login()
 
-# ====== SIDEBAR ======
-mod = render_sidebar()
-logout_button()
+mod = render_sidebar(MENU_STRUCTURE)
 
-# ====== MAIN ======
-if mod:
-    dispatch_module(mod)
-else:
-    # ====== HOME / START PAGE ======
+# ===== HOME =====
+if mod is None:
     _, center_col, _ = st.columns([1, 6, 1])
     with center_col:
         render_image("owtc", height="520px")
@@ -77,7 +45,6 @@ else:
             unsafe_allow_html=True
         )
 
-        st.warning("Wybierz moduł z menu po lewej stronie, aby rozpocząć obliczenia.")
         st.divider()
 
         f_col1, f_col2, f_col3 = st.columns([1, 0.1, 3])
@@ -91,3 +58,5 @@ else:
                 "**Legal Disclaimer:** \n\nResults must be verified by a licensed PE. "
                 "The author assumes no liability for compliance with AISC 360-16 or building codes."
             )
+else:
+    dispatch_module(mod)
