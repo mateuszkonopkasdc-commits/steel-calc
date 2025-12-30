@@ -1,137 +1,47 @@
+# ==== FIX ŚCIEŻEK DLA STREAMLIT CLOUD ====
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]  # steel-calc/
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+# ========================================
+
 import streamlit as st
 
 from app.auth import require_login, logout_button
 from app.ui.styles import inject_styles
-from app.ui.components import ref_text
-from app.utils.images import render_svg_image
+from app.ui.components import render_sidebar
 
-from app.modules import (
-    bolts_strength,
-    bolt_geometry,
-    materials,
-    conversions,
-    welds,
-    angle_gages,
+# ====== KONFIGURACJA STRONY ======
+st.set_page_config(
+    page_title="Engineering Platform | Steel Calc",
+    layout="wide",
 )
 
-# --- PAGE CONFIG & STYLES ---
-st.set_page_config(page_title="Engineering Platform | AISC Tools", layout="wide")
 inject_styles()
 
-# 🔒 LOGIN MUSI BYĆ PRZED JAKIMKOLWIEK UI
+# ====== LOGIN (STOPUJE APP JEŚLI NIEZALOGOWANY) ======
 require_login()
 
-# (opcjonalnie) przycisk wylogowania w nagłówku
-logout_button()
+# ====== SIDEBAR ======
+render_sidebar()
 
-# --- NAVIGATION STATE ---
-if "active_section" not in st.session_state:
-    st.session_state.active_section = None
-if "active_module" not in st.session_state:
-    st.session_state.active_module = None
+with st.sidebar:
+    st.divider()
+    logout_button()
 
-menu_structure = {
-    "🛠️ GENERAL DESIGN DATA": ["Angle Workable Gages", "ASTM Material Data", "Unit Conversions"],
-    "📐 GEOMETRIC LIMITS": [
-        "Bolt Hole Dimensions",
-        "Bolt Min. Edge Distance",
-        "Bolt Min. Spacing",
-        "Effective Throat of Flare-Groove Welds",
-        "Min. Throat of PJP Groove Welds",
-        "Min. Size of Fillet Welds",
-        "Max. Size of Fillet Welds",
-    ],
-    "📋 COMPONENT LIMIT STATES": ["Shear Strength of Bolts", "Tensile Strength of Bolts"],
-}
-
-# --- SIDEBAR NAV (bez Home/Tools) ---
-for label, modules in menu_structure.items():
-    if st.sidebar.button(label, key=f"btn_{label}"):
-        if st.session_state.active_section == label:
-            st.session_state.active_section = None
-            st.session_state.active_module = None
-        else:
-            st.session_state.active_section = label
-            st.session_state.active_module = modules[0]
-        st.rerun()
-
-    if st.session_state.active_section == label:
-        idx = modules.index(st.session_state.active_module) if st.session_state.active_module in modules else 0
-        st.session_state.active_module = st.sidebar.radio(
-            label="",
-            options=modules,
-            index=idx,
-            key=f"nav_{label}",
-        )
-
-mod = st.session_state.active_module
-
-# --- MAIN CONTENT ---
-if mod is None:
-    _, center_col, _ = st.columns([1, 6, 1])
-    with center_col:
-        render_svg_image("owtc", height="530px")
-        st.markdown(
-            "<h1 style='text-align:center; color:white; margin-top:0.2rem;'>Engineering Platform</h1>",
-            unsafe_allow_html=True,
-        )
-        st.divider()
-
-        f_col1, f_col2, f_col3 = st.columns([1, 0.1, 3])
-        with f_col1:
-            st.markdown("Developed by:")
-            st.markdown("👨‍💻 **Mateusz Konopka**")
-        with f_col2:
-            st.markdown('<div class="v-line"></div>', unsafe_allow_html=True)
-        with f_col3:
-            st.warning(
-                "**Legal Disclaimer:** \n\n"
-                "Results must be verified by a licensed PE. The author assumes no liability for compliance with AISC 360-16 or building codes."
-            )
-    st.stop()
-
-# --- HEADER + REFERENCES ---
-icon = "📋" if "📋" in (st.session_state.active_section or "") else "📐" if "📐" in (st.session_state.active_section or "") else "📏"
+# ====== GŁÓWNA STRONA ======
 st.markdown(
-    f'<h1 style="font-size:1.6rem; margin-bottom:0.15rem; margin-top:0.1rem;">{icon} {mod}</h1>',
+    """
+    <h1 style="margin-bottom:0.2em;">🏗️ Steel-Calc Platform</h1>
+    <p style="opacity:0.8;">
+    Engineering calculators based on AISC 360-16
+    </p>
+    """,
     unsafe_allow_html=True,
 )
 
-ref_map = {
-    "Angle Workable Gages": "Reference: AISC 15th Ed. Table 1-7A",
-    "ASTM Material Data": "Reference: AISC 360-16 Table 2-4",
-    "Bolt Hole Dimensions": "Reference: AISC 360-16 Table J3.3",
-    "Bolt Min. Edge Distance": "Reference: AISC 360-16 Table J3.4 & Table J3.5",
-    "Bolt Min. Spacing": "Reference: AISC 360-16 Section J3.3",
-    "Effective Throat of Flare-Groove Welds": "Reference: AISC 360-16 Table J2.2",
-    "Min. Throat of PJP Groove Welds": "Reference: AISC 360-16 Table J2.3",
-    "Min. Size of Fillet Welds": "Reference: AISC 360-16 Table J2.4",
-    "Max. Size of Fillet Welds": "Reference: AISC 360-16 Section J2.2b",
-    "Shear Strength of Bolts": "Reference: AISC 360-16 Section J3.6",
-    "Tensile Strength of Bolts": "Reference: AISC 360-16 Section J3.6",
-}
-if mod in ref_map:
-    ref_text(ref_map[mod])
-
-st.divider()
-
-# --- ROUTER ---
-if mod in ["Shear Strength of Bolts", "Tensile Strength of Bolts"]:
-    bolts_strength.render(mod)
-elif mod in ["Bolt Hole Dimensions", "Bolt Min. Edge Distance", "Bolt Min. Spacing"]:
-    bolt_geometry.render(mod)
-elif mod == "ASTM Material Data":
-    materials.render(mod)
-elif mod == "Unit Conversions":
-    conversions.render(mod)
-elif mod in [
-    "Effective Throat of Flare-Groove Welds",
-    "Min. Throat of PJP Groove Welds",
-    "Min. Size of Fillet Welds",
-    "Max. Size of Fillet Welds",
-]:
-    welds.render(mod)
-elif mod == "Angle Workable Gages":
-    angle_gages.render(mod)
-else:
-    st.error("Unknown module.")
+st.info(
+    "Wybierz moduł z menu po lewej stronie, aby rozpocząć obliczenia."
+)
