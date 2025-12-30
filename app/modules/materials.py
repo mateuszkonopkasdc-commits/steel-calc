@@ -26,7 +26,6 @@ def render(mod: str) -> None:
             if astm_sel == "A500 Gr. C":
                 fy_res = "46" if sh_astm == "HSS Round" else "50"
 
-            # Punkt 3: zielone wyniki w GENERAL DESIGN DATA
             result_card("Yield Stress: Fy [ksi]", fy_res, color="ok")
             result_card("Tensile Stress: Fu [ksi]", d_astm["Fu"], color="ok")
 
