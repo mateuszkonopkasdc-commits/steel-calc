@@ -40,25 +40,25 @@ def render_sidebar() -> str | None:
     if "active_module" not in st.session_state:
         st.session_state.active_module = None
 
-    st.sidebar.markdown("## Menu")
+    # celowo BEZ nagłówka "Menu"
 
-    for section_label_txt, modules in MENU_STRUCTURE.items():
-        if st.sidebar.button(section_label_txt, key=f"sec_{section_label_txt}"):
-            if st.session_state.active_section == section_label_txt:
+    for sec, modules in MENU_STRUCTURE.items():
+        if st.sidebar.button(sec, key=f"sec_{sec}"):
+            if st.session_state.active_section == sec:
                 st.session_state.active_section = None
                 st.session_state.active_module = None
             else:
-                st.session_state.active_section = section_label_txt
+                st.session_state.active_section = sec
                 st.session_state.active_module = modules[0]
             st.rerun()
 
-        if st.session_state.active_section == section_label_txt:
+        if st.session_state.active_section == sec:
             idx = modules.index(st.session_state.active_module) if st.session_state.active_module in modules else 0
             st.session_state.active_module = st.sidebar.radio(
                 label="",
                 options=modules,
                 index=idx,
-                key=f"mod_{section_label_txt}",
+                key=f"mod_{sec}",
             )
 
     return st.session_state.active_module
