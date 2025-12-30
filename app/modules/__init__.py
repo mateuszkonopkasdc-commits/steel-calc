@@ -1,6 +1,4 @@
-from . import bolts_strength
-from . import bolt_geometry
-from . import materials
-from . import conversions
-from . import welds
-from . import angle_gages
+# Celowo puste.
+# Nie importujemy tutaj podmodułów (bolts_strength itd.),
+# bo Streamlit Cloud odpala import pakietu przy starcie aplikacji
+# i każdy błąd w którymkolwiek module wywali całą appkę.
