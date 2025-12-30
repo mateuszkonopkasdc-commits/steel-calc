@@ -28,10 +28,11 @@ inject_styles()
 
 require_login()
 
+# >>> TO NAPRAWIA TWOJ TYPEERROR NA CLOUD <<<
 mod = render_sidebar(MENU_STRUCTURE)
 
-# ===== HOME =====
 if mod is None:
+    # HOME
     _, center_col, _ = st.columns([1, 6, 1])
     with center_col:
         render_image("owtc", height="520px")
