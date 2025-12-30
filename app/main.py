@@ -1,10 +1,20 @@
+import sys
+from pathlib import Path
+
+# --- FIX for Streamlit Cloud imports ---
+# When Streamlit runs "app/main.py", Python's sys.path points to ".../app",
+# so "import app.*" fails. We add repository root to sys.path.
+REPO_ROOT = Path(__file__).resolve().parents[1]  # .../steel-calc
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 import streamlit as st
 
 from app.auth import require_login, logout_button
 from app.ui.styles import inject_styles
 from app.ui.components import render_sidebar
 from app.modules.router import dispatch_module
-from app.utils.images import render_image  # zakładam że masz render_image w utils/images.py
+from app.utils.images import render_image  # jeśli u Ciebie jest inna nazwa -> napisz
 
 # ====== KONFIGURACJA STRONY ======
 st.set_page_config(page_title="Engineering Platform | Steel Calc", layout="wide")
@@ -24,7 +34,6 @@ else:
     # ====== HOME / START PAGE ======
     _, center_col, _ = st.columns([1, 6, 1])
     with center_col:
-        # obrazek startowy (wraca)
         render_image("owtc", height="520px")
 
         st.markdown(
@@ -36,12 +45,10 @@ else:
             unsafe_allow_html=True
         )
 
-        # żółta informacja
         st.warning("Wybierz moduł z menu po lewej stronie, aby rozpocząć obliczenia.")
 
         st.divider()
 
-        # autor + disclaimer jak wcześniej
         f_col1, f_col2, f_col3 = st.columns([1, 0.1, 3])
         with f_col1:
             st.markdown("Developed by:")
