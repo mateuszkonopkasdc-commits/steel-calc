@@ -1,22 +1,54 @@
 import sys
 from pathlib import Path
+import streamlit as st
 
 # --- FIX for Streamlit Cloud imports ---
-# When Streamlit runs "app/main.py", Python's sys.path points to ".../app",
-# so "import app.*" fails. We add repository root to sys.path.
 REPO_ROOT = Path(__file__).resolve().parents[1]  # .../steel-calc
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
-
-import streamlit as st
 
 from app.auth import require_login, logout_button
 from app.ui.styles import inject_styles
 from app.ui.components import render_sidebar
 from app.modules.router import dispatch_module
-from app.utils.images import render_image  # jeśli u Ciebie jest inna nazwa -> napisz
 
-# ====== KONFIGURACJA STRONY ======
+# --- Local image helper (no extra imports needed) ---
+def render_image(name: str, height: str = "520px", width: str = "100%") -> None:
+    """
+    Renders image from /assets by name (without extension).
+    Supported: png/jpg/jpeg/webp
+    """
+    assets_dir = REPO_ROOT / "assets"
+    exts = [".png", ".jpg", ".jpeg", ".webp", ".PNG", ".JPG", ".JPEG", ".WEBP"]
+    img_path = None
+    for ext in exts:
+        p = assets_dir / f"{name}{ext}"
+        if p.exists():
+            img_path = p
+            break
+
+    if not img_path:
+        st.info(f"Brak obrazka: assets/{name}.png (lub .jpg/.jpeg/.webp)")
+        return
+
+    # HTML img so we can control height
+    import base64
+    mime = "image/png"
+    if img_path.suffix.lower() in [".jpg", ".jpeg"]:
+        mime = "image/jpeg"
+    elif img_path.suffix.lower() == ".webp":
+        mime = "image/webp"
+
+    b64 = base64.b64encode(img_path.read_bytes()).decode("utf-8")
+    st.markdown(
+        f"""
+        <img src="data:{mime};base64,{b64}"
+             style="width:{width}; height:{height}; object-fit:contain; border-radius:8px;" />
+        """,
+        unsafe_allow_html=True
+    )
+
+# ====== PAGE CONFIG ======
 st.set_page_config(page_title="Engineering Platform | Steel Calc", layout="wide")
 inject_styles()
 
@@ -46,7 +78,6 @@ else:
         )
 
         st.warning("Wybierz moduł z menu po lewej stronie, aby rozpocząć obliczenia.")
-
         st.divider()
 
         f_col1, f_col2, f_col3 = st.columns([1, 0.1, 3])
