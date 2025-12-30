@@ -1,30 +1,43 @@
 import streamlit as st
-from app.auth import require_login, logout_button
-from app.ui.styles import inject_styles
-from app.ui.components import render_sidebar
-from app.modules.router import MODULE_MAP, MENU_STRUCTURE
+import sys
+import os
 
-# 1. Konfiguracja strony (musi być pierwsza)
-st.set_page_config(page_title="SteelCalc", layout="wide")
+# Dodanie ścieżki głównej do sys.path, aby uniknąć problemów z importami na Cloud
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-# 2. Wstrzyknięcie stylów CSS (z folderu ui)
-inject_styles()
+# Próba importu z obsługą różnych środowisk (lokalne vs cloud)
+try:
+    from auth import require_login, logout_button
+except ImportError:
+    from app.auth import require_login, logout_button
 
-# 3. Wymuszenie logowania (z folderu app)
-require_login()
+from modules import bolts_strength
 
-# 4. Renderowanie Sidebara (z folderu ui) - teraz on zawiera stopkę!
-active_module_name = render_sidebar(MENU_STRUCTURE)
+def main():
+    st.set_page_config(page_title="US Structural Platform", layout="wide")
 
-# 5. Routing logic (z folderu modules)
-if active_module_name and active_module_name in MODULE_MAP:
-    # Jeśli użytkownik coś wybrał -> uruchom odpowiedni moduł
-    MODULE_MAP[active_module_name](active_module_name)
-else:
-    # Jeśli nic nie wybrano -> Ekran startowy (Home)
-    st.title("Welcome to SteelCalc 🏗️")
-    st.markdown("Select a module from the sidebar to begin calculations.")
-    
-    # Przycisk wylogowania na ekranie startowym
-    st.divider()
+    # Logika autoryzacji
+    if not require_login():
+        st.stop()
+
+    st.sidebar.title("Navigation")
     logout_button()
+    
+    menu = ["Welcome Page", "Shear Strength of Bolts", "Combined Shear + Tension", "Spacing & Geometry"]
+    choice = st.sidebar.selectbox("Select Module", menu)
+
+    if choice == "Welcome Page":
+        st.title("Welcome to US Structural Platform")
+        st.write("Select a module from the sidebar to begin calculations.")
+    
+    elif choice in ["Shear Strength of Bolts", "Combined Shear + Tension", "Spacing & Geometry"]:
+        # Wywołanie modułu obliczeniowego
+        bolts_strength.run_module(choice)
+
+    # STOPKA (Zgodnie z wytycznymi)
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("Developed by: 👨‍💻 [Twoje Imię]")
+    st.sidebar.caption("Legal Disclaimer:\nThis tool is for educational purposes only. Verify all results with a licensed P.E.")
+
+if __name__ == "__main__":
+    main()
