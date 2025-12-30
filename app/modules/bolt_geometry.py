@@ -48,6 +48,10 @@ def render(mod: str) -> None:
             result_card("Base Minimum Distance [in]", format_eng_frac_no_unit(base_e), "var(--accent)")
             
             if inc_e > 0:
+                # --- NOWOŚĆ: Ostrzeżenie dla Long-Slot (jak w Spacing) ---
+                if h_ty_e == "Long-Slot":
+                     st.warning("⚠️ Warning: Large edge distance increment required due to Long-Slot geometry.")
+
                 result_card("Values of Edge Distance Increment [in]", f"+ {format_eng_frac_no_unit(inc_e)}", "var(--accent)")
                 result_card("Total Minimum Distance [in]", format_eng_frac_no_unit(base_e + inc_e), "var(--ok)")
         return
@@ -90,7 +94,7 @@ def render(mod: str) -> None:
             result_card("Clear Distance Check", "OK" if is_ok else "NOT OK", "var(--ok)" if is_ok else "var(--accent)")
             
             if not is_ok:
-                # ZMIANA: Teraz wyliczamy inkrement dla KAŻDEGO typu (również Long-Slot)
+                # Ostrzeżenie dla Spacing (już wdrożone wcześniej)
                 if h_ty_s == "Long-Slot":
                      st.warning("⚠️ Warning: Large spacing increment required due to Long-Slot geometry.")
                 
